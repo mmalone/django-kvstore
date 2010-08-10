@@ -9,14 +9,24 @@ Example configuration for Django settings:
 
 
 from base import BaseStorage, InvalidKeyValueStoreBackendError
-from django.core.exceptions import ImproperlyConfigured
-from django.utils.encoding import smart_unicode, smart_str
-from django.utils import simplejson
+from kvstore import ImproperlyConfigured
+try:
+    import simplejson as json
+except ImportError:
+    import json
 
 try:
     import simpledb
 except ImportError:
     raise InvalidKeyValueStoreBackendError("SipmleDB key-value store backend requires the 'python-simpledb' library")
+
+
+def _utf8_str(s):
+    if isinstance(s, unicode):
+        return s.encode('utf-8')
+    else:
+        return str(s)
+
 
 class StorageClass(BaseStorage):
     def __init__(self, domain, params):
@@ -33,17 +43,17 @@ class StorageClass(BaseStorage):
     def set(self, key, value):
         if isinstance(value, unicode):
             value = value.encode('utf-8')
-        self._domain[smart_str(key)] = {'value': simplejson.dumps(value)}
+        self._domain[_utf8_str(key)] = {'value': simplejson.dumps(value)}
 
     def get(self, key):
-        val = self._domain[smart_str(key)].get('value', None)
+        val = self._domain[_utf8_str(key)].get('value', None)
         if isinstance(val, basestring):
             return simplejson.loads(val)
         else:
             return val
 
     def delete(self, key):
-        del self._domain[smart_str(key)]
+        del self._domain[_utf8_str(key)]
 
     def close(self, **kwargs):
         pass

@@ -15,7 +15,7 @@ table name Django uses is the same table name provided in the
 """
 
 import base64
-from django_kvstore.backends.base import BaseStorage
+from kvstore.backends.base import BaseStorage
 from django.db import connection, transaction, DatabaseError
 try:
     import cPickle as pickle

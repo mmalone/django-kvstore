@@ -1,6 +1,6 @@
 "Base key-value store abstract class."
 
-from django.core.exceptions import ImproperlyConfigured
+from kvstore import ImproperlyConfigured
 
 class InvalidKeyValueStoreBackendError(ImproperlyConfigured):
     pass

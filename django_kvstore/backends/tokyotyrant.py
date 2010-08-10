@@ -10,14 +10,24 @@ Example configuration for Django settings:
 """
 
 from base import BaseStorage, InvalidKeyValueStoreBackendError
-from django.core.exceptions import ImproperlyConfigured
-from django.utils.encoding import smart_unicode, smart_str
-from django.utils import simplejson
+from kvstore import ImproperlyConfigured
+try:
+    import simplejson as json
+except ImportError:
+    import json
 
 try:
     import pytyrant
 except ImportError:
     raise InvalidKeyValueStoreBackendError("Tokyotyrant key-value store backend requires the 'pytyrant' library")
+
+
+def _utf8_str(s):
+    if isinstance(s, unicode):
+        return s.encode('utf-8')
+    else:
+        return str(s)
+
 
 class StorageClass(BaseStorage):
     def __init__(self, server, params):
@@ -32,17 +42,17 @@ class StorageClass(BaseStorage):
     def set(self, key, value):
         if isinstance(value, unicode):
             value = value.encode('utf-8')
-        self._db[smart_str(key)] = simplejson.dumps(value)
+        self._db[_utf8_str(key)] = simplejson.dumps(value)
 
     def get(self, key):
-        val = self._db.get(smart_str(key))
+        val = self._db.get(_utf8_str(key))
         if isinstance(val, basestring):
             return simplejson.loads(val)
         else:
             return val
 
     def delete(self, key):
-        del self._db[smart_str(key)]
+        del self._db[_utf8_str(key)]
 
     def close(self, **kwargs):
         pass

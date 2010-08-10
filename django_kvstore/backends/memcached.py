@@ -10,7 +10,6 @@ Example configuration for Django settings:
 """
 
 from base import BaseStorage, InvalidKeyValueStoreBackendError
-from django.utils.encoding import smart_unicode, smart_str
 
 try:
     import cmemcache as memcache
@@ -20,6 +19,14 @@ except ImportError:
     except:
         raise InvalidKeyValueStoreBackendError("Memcached key-value store backend requires either the 'memcache' or 'cmemcache' library")
 
+
+def _utf8_str(s):
+    if isinstance(s, unicode):
+        return s.encode('utf-8')
+    else:
+        return str(s)
+
+
 class StorageClass(BaseStorage):
     def __init__(self, server, params):
         BaseStorage.__init__(self, params)
@@ -28,17 +35,17 @@ class StorageClass(BaseStorage):
     def set(self, key, value):
         if isinstance(value, unicode):
             value = value.encode('utf-8')
-        self._db.set(smart_str(key), value, 0)
+        self._db.set(_utf8_str(key), value, 0)
 
     def get(self, key):
-        val = self._db.get(smart_str(key))
+        val = self._db.get(_utf8_str(key))
         if isinstance(val, basestring):
-            return smart_unicode(val)
+            return val.decode('utf-8')
         else:
             return val
 
     def delete(self, key):
-        self._db.delete(smart_str(key))
+        self._db.delete(_utf8_str(key))
 
     def close(self, **kwargs):
         self._db.disconnect_all()

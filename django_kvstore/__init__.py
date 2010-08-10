@@ -13,8 +13,7 @@ __credits__ = """Mike Malone
 Brad Choate"""
 
 from cgi import parse_qsl
-from django.conf import settings
-from django.core import signals
+from goldengate import settings
 
 # Names for use in settings file --> name of module in "backends" directory.
 # Any backend scheeme that is not in this dictionary is treated as a Python
@@ -29,7 +28,14 @@ BACKENDS = {
     'redis': 'redisdj',
 }
 
-class InvalidKeyValueStoreBackend(Exception): pass
+
+class InvalidKeyValueStoreBackend(Exception): 
+    pass
+
+
+class ImproperlyConfigured(Exception):
+    pass
+
 
 def get_kvstore(backend_uri):
     if backend_uri.find(':') == -1:
@@ -49,16 +55,10 @@ def get_kvstore(backend_uri):
         host = host[:-1]
 
     if scheme in BACKENDS:
-        module = __import__('django_kvstore.backends.%s' % BACKENDS[scheme], {}, {}, [''])
+        module = __import__('kvstore.backends.%s' % BACKENDS[scheme], {}, {}, [''])
     else:
         module = __import__(scheme, {}, {}, [''])
     return getattr(module, 'StorageClass')(host, params)
 
-kvstore = get_kvstore(settings.KEY_VALUE_STORE_BACKEND)
-"""A handle to the configured key-value store."""
+kvstore = get_kvstore(settings.STORAGE_BACKEND)
 
-# Some kv store backends need to do a cleanup at the end of
-# a request cycle. If the cache provides a close() method, wire
-# it up here.
-if hasattr(kvstore, 'close'):
-    signals.request_finished.connect(kvstore.close)

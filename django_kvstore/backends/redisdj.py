@@ -10,7 +10,6 @@ port is optional. If none is given, the port specified in redis.conf will be use
 """
 import base64
 from base import BaseStorage, InvalidKeyValueStoreBackendError
-from django.utils.encoding import smart_unicode, smart_str
 
 try:
     import redis
@@ -21,6 +20,12 @@ try:
     import cPickle as pickle
 except ImportError:
     import pickle
+
+def _utf8_str(s):
+    if isinstance(s, unicode):
+        return s.encode('utf-8')
+    else:
+        return str(s)
 
 class StorageClass(BaseStorage):
 
@@ -36,16 +41,16 @@ class StorageClass(BaseStorage):
 
     def set(self, key, value):
         encoded = base64.encodestring(pickle.dumps(value, 2)).strip()
-        self._db.set(smart_str(key), encoded)
+        self._db.set(_utf8_str(key), encoded)
 
     def get(self, key):
-        val = self._db.get(smart_str(key))
+        val = self._db.get(_utf8_str(key))
         if val is None:
             return None
         return pickle.loads(base64.decodestring(val))
 
     def delete(self, key):
-        self._db.delete(smart_str(key))
+        self._db.delete(_utf8_str(key))
 
     def close(self, **kwargs):
         pass

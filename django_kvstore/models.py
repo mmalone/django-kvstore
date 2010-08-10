@@ -1,4 +1,4 @@
-from django_kvstore import kvstore
+from kvstore import kvstore
 
 
 class FieldError(Exception): pass
